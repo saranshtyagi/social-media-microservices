@@ -1,4 +1,5 @@
 const User = require("../models/User");
+const generateTokens = require("../utils/generateToken");
 const logger = require("../utils/logger");
 const { validateRegistration } = require("../utils/validation");
 
@@ -27,9 +28,25 @@ const registerUser = async(req, res) => {
                 message: 'User already exists'
             });
         }
+
+        const user = new User({username, email, password}); 
+        await user.save(); 
+        logger.warn("User saved successfully", user._id);
+
+        const{accessToken, refreshToken} = await generateTokens(user); 
+        return res.status(201).json({
+            success: true,
+            message: 'User registered successfully',
+            accessToken, 
+            refreshToken
+        });
         
     } catch (error) {
-        
+        logger.error('Registration error occurred!', error);
+        res.status(500).json({
+            success: false, 
+            message: 'Internal Server Error'
+        });
     }
 } 
 
